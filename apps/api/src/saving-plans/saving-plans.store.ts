@@ -48,10 +48,19 @@ export class SavingPlansStore {
   findByIdempotency(userId: string, key: string): SavingPayment | null { return [...this.payments.values()].find((payment) => payment.userId === userId && payment.idempotencyKey === key) ?? null; }
   async allocateOrderCode(): Promise<number> {
     if (this.counterModel) {
+      const now = new Date();
       const counter = await this.counterModel.findOneAndUpdate(
         { _id: "payos_order_code" },
-        { $inc: { sequenceValue: 1 }, $set: { updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
+        [
+          {
+            $set: {
+              sequenceValue: { $add: [{ $ifNull: ["$sequenceValue", 100000] }, 1] },
+              createdAt: { $ifNull: ["$createdAt", now] },
+              updatedAt: now,
+            },
+          },
+        ],
+        { upsert: true, new: true },
       ).lean().exec();
       if (counter?.sequenceValue) {
         this.nextOrderCode = Math.max(this.nextOrderCode, counter.sequenceValue);

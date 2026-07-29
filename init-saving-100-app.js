@@ -1971,7 +1971,6 @@ createOrUpdateCollection("counters", {
 
         required: [
             "sequenceValue",
-            "createdAt",
             "updatedAt"
         ],
 
@@ -2017,6 +2016,23 @@ db.counters.updateOne(
 );
 
 print("[UPSERT COUNTER] payos_order_code");
+
+/* Backfill legacy counter documents that do not have createdAt. */
+db.counters.updateOne(
+    {
+        _id: "payos_order_code",
+        createdAt: {
+            $exists: false
+        }
+    },
+    {
+        $set: {
+            createdAt: new Date()
+        }
+    }
+);
+
+print("[BACKFILL COUNTER CREATED AT] payos_order_code");
 
 
 /* ============================================================
