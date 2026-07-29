@@ -15,6 +15,8 @@ export class SavingPlansService {
 
   preview(input: AmountGenerationInput) { const generated = generateAmounts(input); return { ...generated, slotCount: generated.amounts.length, sample: generated.amounts.slice(0, 12) }; }
 
+  list(userId: string) { return [...this.store.plans.values()].filter((plan) => plan.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); }
+
   create(userId: string, input: CreatePlanInput) {
     const name = input.name.trim();
     if (name.length < 2 || name.length > 80) throw new ApiError("PLAN_NAME_INVALID", "Tên kế hoạch phải từ 2 đến 80 ký tự.");

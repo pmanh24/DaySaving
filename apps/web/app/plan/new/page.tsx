@@ -6,11 +6,15 @@ import { useRouter } from "next/navigation";
 import { SimplePage } from "@/components/simple-page";
 import { compactMoney, money } from "@/lib/format";
 import { draftAmounts, planFromDraft, saveDemoPlan, type PlanDraft } from "@/lib/plan-demo";
+import { isDemoMode } from "@/lib/api";
+import { ApiNewPlanView } from "@/components/api-new-plan-view";
 
 const today = new Date().toISOString().slice(0, 10);
 const initialDraft: PlanDraft = { name: "Quỹ du lịch", durationDays: 30, generationMode: "CLASSIC_SEQUENCE", unitAmount: 5000, targetAmount: 10000000, minAmount: 20000, maxAmount: 200000, stepAmount: 1000, customAmounts: [], startDate: today, timezone: "Asia/Ho_Chi_Minh", confirmationMode: "PAYOS_ONLY", paymentExpiresInMinutes: 15 };
 
-export default function NewPlanPage() {
+export default function NewPlanPage() { return isDemoMode ? <DemoNewPlanPage /> : <ApiNewPlanView />; }
+
+function DemoNewPlanPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<PlanDraft>(initialDraft);

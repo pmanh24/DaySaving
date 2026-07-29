@@ -7,17 +7,40 @@ import { ChallengesModule } from "./challenges/challenges.module";
 import { HealthController } from "./health/health.controller";
 import { SavingPlansModule } from "./saving-plans/saving-plans.module";
 import { PaymentsModule } from "./payments/payments.module";
+import { DatabaseModule } from "./database/database.module";
+import { DatabaseHealthController } from "./health/database-health.controller";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, cache: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      envFilePath: [
+        "apps/api/.env.local",
+        "apps/api/.env",
+        ".env.local",
+        ".env",
+        "../../.env.local",
+        "../../.env",
+      ],
+      validate: (config: Record<string, unknown>) => {
+        if (typeof config.MONGODB_URI !== "string" || config.MONGODB_URI.trim().length === 0) {
+          throw new Error("MONGODB_URI is required. Add it to apps/api/.env before starting the API.");
+        }
+        if (config.MONGODB_DB_NAME && config.MONGODB_DB_NAME !== "saving_100_app") {
+          throw new Error("MONGODB_DB_NAME must be saving_100_app.");
+        }
+        return config;
+      },
+    }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    DatabaseModule,
     AuthModule,
     ChallengesModule,
     SavingPlansModule,
     PaymentsModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, DatabaseHealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

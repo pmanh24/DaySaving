@@ -2,6 +2,13 @@ export type ChallengeStatus = "ACTIVE" | "COMPLETED" | "ARCHIVED";
 export type CellStatus = "AVAILABLE" | "COMPLETED" | "REVERSED";
 export type SelectionMode = "FREE" | "RANDOM" | "ASCENDING" | "DESCENDING";
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  displayName: string;
+  timezone: string;
+}
+
 export interface ChallengeSummary {
   id: string;
   name: string;

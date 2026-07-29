@@ -3,14 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit" }
-  ,
-  "pnpm": {
-  "onlyBuiltDependencies": [
-    "argon2",
-    "sharp",
-    "@scarf/scarf"
-  ]
-}
+  "types": "src/index.ts",
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
 }

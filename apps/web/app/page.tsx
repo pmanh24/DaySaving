@@ -10,6 +10,8 @@ import { SavingBoard } from "@/components/saving-board";
 import { compactMoney, money } from "@/lib/format";
 import { demoCheckin, demoReverse, getDemoBoard, setDemoBoard } from "@/lib/demo-store";
 import { useSavingUi } from "@/stores/use-saving-ui";
+import { useAuth } from "@/components/auth-provider";
+import { apiRequest, isDemoMode } from "@/lib/api";
 
 async function getBoard(): Promise<BoardResponse> {
   if (process.env.NEXT_PUBLIC_DEMO_MODE !== "false") return getDemoBoard();
@@ -18,8 +20,13 @@ async function getBoard(): Promise<BoardResponse> {
   return (await response.json() as { data: BoardResponse }).data;
 }
 
+async function getApiBoard(accessToken: string): Promise<BoardResponse> {
+  return apiRequest<BoardResponse>("/challenges/current", {}, accessToken);
+}
+
 export default function HomePage() {
-  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ["challenges", "current"], queryFn: getBoard });
+  const { accessToken } = useAuth();
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ["challenges", "current", accessToken], queryFn: () => isDemoMode ? getBoard() : getApiBoard(accessToken ?? ""), enabled: isDemoMode || Boolean(accessToken) });
   const [localBoard, setLocalBoard] = useState<BoardResponse>();
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; checkin?: Checkin } | null>(null);
@@ -51,6 +58,13 @@ export default function HomePage() {
   const confirm = () => {
     if (!current || !selected) return;
     setLoading(true);
+    if (!isDemoMode) {
+      void apiRequest<BoardResponse>(`/challenges/${current.challenge.id}/checkins`, { method: "POST", body: JSON.stringify({ number: selected.number, idempotencyKey: crypto.randomUUID() }) }, accessToken ?? undefined)
+        .then((next) => { setLocalBoard(next); setToast({ message: `Đã tiết kiệm ${money(selected.amount)}`, checkin: next.today.checkin ?? undefined }); setSheetOpen(false); setSelectedNumber(null); setSuggestedNumber(null); })
+        .catch((error: unknown) => setToast({ message: error instanceof Error ? error.message : "Không thể lưu khoản tiết kiệm" }))
+        .finally(() => setLoading(false));
+      return;
+    }
     window.setTimeout(() => {
       try {
         const result = demoCheckin(current, selected.number);
@@ -70,6 +84,12 @@ export default function HomePage() {
 
   const undo = () => {
     if (!current || !toast?.checkin) return;
+    if (!isDemoMode) {
+      void apiRequest<BoardResponse>(`/challenges/checkins/${toast.checkin.id}/reverse`, { method: "POST" }, accessToken ?? undefined)
+        .then((next) => { setLocalBoard(next); setToast({ message: "Đã hoàn tác khoản tiết kiệm" }); })
+        .catch((error: unknown) => setToast({ message: error instanceof Error ? error.message : "Không thể hoàn tác" }));
+      return;
+    }
     const next = demoReverse(current, toast.checkin);
     setLocalBoard(next);
     setDemoBoard(next);

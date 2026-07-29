@@ -8,11 +8,15 @@ import type { SavingPayment, SavingSlot, SavingSlotStatus } from "@saving/shared
 import { SimplePage } from "@/components/simple-page";
 import { money } from "@/lib/format";
 import { cancelDemoPayment, createDemoPayment, filterSlots, getDemoPlan, markDemoPaymentPaid, paymentStatusLabel, saveDemoPlan } from "@/lib/plan-demo";
+import { isDemoMode } from "@/lib/api";
+import { ApiPlanView } from "@/components/api-plan-view";
 
 type Tab = "ALL" | SavingSlotStatus;
 const tabs: Array<{ id: Tab; label: string }> = [{ id: "AVAILABLE", label: "Còn lại" }, { id: "PAID", label: "Đã thanh toán" }, { id: "RESERVED", label: "Đang chờ" }, { id: "ALL", label: "Tất cả" }];
 
-export default function PlanPage() {
+export default function PlanPage() { return isDemoMode ? <DemoPlanPage /> : <ApiPlanView />; }
+
+function DemoPlanPage() {
   const [state, setState] = useState(getDemoPlan);
   const [tab, setTab] = useState<Tab>("AVAILABLE");
   const [sort, setSort] = useState<"asc" | "desc">("asc");
