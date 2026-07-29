@@ -27,7 +27,7 @@ export function ChallengePaymentSheet({ payment, onClose, onReconcile, onCancel,
         <p>Quét mã QR bằng ứng dụng ngân hàng và chuyển đúng số tiền bên dưới.</p>
         <div className="qr-wrap"><QRCodeSVG value={qrValue} size={190} includeMargin /></div>
         <div className="sheet-amount">{money(payment.amount)}</div>
-        <p className="qr-help">Ô chỉ được hoàn thành sau khi backend nhận webhook hoặc kiểm tra trạng thái payOS.</p>
+        <p className="qr-help">Ô chỉ được hoàn thành sau khi hệ thống nhận thành công.</p>
         <div className="payment-actions">
           <button className="button secondary" onClick={() => { if (payment.checkoutUrl) void navigator.clipboard?.writeText(payment.checkoutUrl); }} disabled={loading}><Copy size={16} /> Link thanh toán</button>
           <button className="button secondary" onClick={onReconcile} disabled={loading}><RefreshCw size={16} /> Kiểm tra</button>
