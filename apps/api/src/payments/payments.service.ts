@@ -20,7 +20,7 @@ export class PaymentsService {
     if (pending) { if (pending.slotId === input.slotId) return pending; throw new ApiError("PAYMENT_ALREADY_PENDING", "Bạn đang có một khoản chờ thanh toán trong ngày này.", 409); }
     const slot = this.store.getSlot(userId, plan.id, input.slotId);
     const now = new Date(); const expiresAt = new Date(now.getTime() + plan.paymentExpiresInMinutes * 60000).toISOString(); const paymentId = new Types.ObjectId().toString();
-    const orderCode = this.store.allocateOrderCode();
+    const orderCode = await this.store.allocateOrderCode();
     const payment: SavingPayment = { id: paymentId, userId, planId: plan.id, slotId: slot.id, dayIndex: plan.currentDayIndex, provider: "PAYOS", orderCode, paymentLinkId: null, amount: slot.amount, currency: "VND", description: `TK${orderCode}`, checkoutUrl: null, qrCode: null, status: "CREATING", idempotencyKey: input.idempotencyKey, expiresAt, paidAt: null, cancelledAt: null, lastReconciledAt: null, errorCode: null, errorMessage: null, createdAt: now.toISOString() };
     this.repository.add(payment);
     this.store.reserveSlot(userId, plan.id, slot.id, payment.id, expiresAt);

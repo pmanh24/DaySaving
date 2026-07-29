@@ -167,8 +167,8 @@ export class ChallengePaymentsService {
   }
 
   private async nextOrderCode(): Promise<number> {
-    let orderCode = this.store.allocateOrderCode();
-    while (await this.model.exists({ orderCode })) orderCode = this.store.allocateOrderCode();
+    let orderCode = await this.store.allocateOrderCode();
+    while (await this.model.exists({ orderCode })) orderCode = await this.store.allocateOrderCode();
     return orderCode;
   }
 

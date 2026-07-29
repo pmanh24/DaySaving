@@ -4,7 +4,7 @@ import { Types, type Model } from "mongoose";
 import type { SavingDayRecord, SavingPayment, SavingPlan, SavingPlanTodayResponse, SavingSlot } from "@saving/shared";
 import { ApiError } from "../common/api-error";
 import { localDate } from "../common/date";
-import { SavingDayRecordDocument, SavingPaymentDocument, SavingPlanDocument, SavingSlotDocument } from "../database/schemas";
+import { CounterDocument, SavingDayRecordDocument, SavingPaymentDocument, SavingPlanDocument, SavingSlotDocument } from "../database/schemas";
 
 @Injectable()
 export class SavingPlansStore {
@@ -19,15 +19,23 @@ export class SavingPlansStore {
     @Optional() @InjectModel(SavingSlotDocument.name) private readonly slotModel?: Model<SavingSlotDocument>,
     @Optional() @InjectModel(SavingPaymentDocument.name) private readonly paymentModel?: Model<SavingPaymentDocument>,
     @Optional() @InjectModel(SavingDayRecordDocument.name) private readonly recordModel?: Model<SavingDayRecordDocument>,
+    @Optional() @InjectModel(CounterDocument.name) private readonly counterModel?: Model<CounterDocument>,
   ) {}
 
   async onModuleInit(): Promise<void> {
     if (!this.planModel || !this.slotModel || !this.paymentModel || !this.recordModel) return;
-    const [plans, slots, payments, records] = await Promise.all([this.planModel.find().exec(), this.slotModel.find().exec(), this.paymentModel.find().exec(), this.recordModel.find().exec()]);
+    const [plans, slots, payments, records, counter] = await Promise.all([
+      this.planModel.find().exec(),
+      this.slotModel.find().exec(),
+      this.paymentModel.find().exec(),
+      this.recordModel.find().exec(),
+      this.counterModel?.findById("payos_order_code").lean().exec() ?? Promise.resolve(null),
+    ]);
     for (const doc of plans) this.plans.set(doc._id.toString(), this.planFromDocument(doc));
     for (const doc of slots) this.slots.set(doc._id.toString(), this.slotFromDocument(doc));
     for (const doc of payments) { const payment = this.paymentFromDocument(doc); this.payments.set(payment.id, payment); this.nextOrderCode = Math.max(this.nextOrderCode, payment.orderCode); }
     for (const doc of records) this.dayRecords.set(doc._id.toString(), this.recordFromDocument(doc));
+    if (counter?.sequenceValue) this.nextOrderCode = Math.max(this.nextOrderCode, counter.sequenceValue);
   }
 
   addPlan(plan: SavingPlan): void { this.plans.set(plan.id, plan); void this.persistPlan(plan); }
@@ -38,7 +46,21 @@ export class SavingPlansStore {
   getPayment(userId: string, paymentId: string): SavingPayment { const payment = this.payments.get(paymentId); if (!payment || payment.userId !== userId) throw new ApiError("PAYMENT_NOT_FOUND", "Không tìm thấy thanh toán.", 404); return payment; }
   findPendingPayment(userId: string, planId: string, dayIndex: number): SavingPayment | null { return [...this.payments.values()].find((payment) => payment.userId === userId && payment.planId === planId && payment.dayIndex === dayIndex && ["CREATING", "PENDING", "PROCESSING"].includes(payment.status)) ?? null; }
   findByIdempotency(userId: string, key: string): SavingPayment | null { return [...this.payments.values()].find((payment) => payment.userId === userId && payment.idempotencyKey === key) ?? null; }
-  allocateOrderCode(): number { this.nextOrderCode += 1; return this.nextOrderCode; }
+  async allocateOrderCode(): Promise<number> {
+    if (this.counterModel) {
+      const counter = await this.counterModel.findOneAndUpdate(
+        { _id: "payos_order_code" },
+        { $inc: { sequenceValue: 1 }, $set: { updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      ).lean().exec();
+      if (counter?.sequenceValue) {
+        this.nextOrderCode = Math.max(this.nextOrderCode, counter.sequenceValue);
+        return counter.sequenceValue;
+      }
+    }
+    this.nextOrderCode += 1;
+    return this.nextOrderCode;
+  }
   addPayment(payment: SavingPayment): void { this.payments.set(payment.id, payment); void this.persistPayment(payment); }
 
   reserveSlot(userId: string, planId: string, slotId: string, paymentId: string, expiresAt: string): SavingSlot {

@@ -95,7 +95,9 @@ export class AuthService {
   }
 
   private token(userId: string, type: TokenType): string {
-    return jwt.sign({ sub: userId, type, jti: randomUUID() }, this.secret(type), { expiresIn: type === "access" ? "15m" : "30d" });
+    const configuredExpiry = process.env[type === "access" ? "JWT_ACCESS_EXPIRES_IN" : "JWT_REFRESH_EXPIRES_IN"];
+    const expiresIn = (configuredExpiry ?? (type === "access" ? "15m" : "30d")) as jwt.SignOptions["expiresIn"];
+    return jwt.sign({ sub: userId, type, jti: randomUUID() }, this.secret(type), { expiresIn });
   }
 
   private secret(type: TokenType): string {

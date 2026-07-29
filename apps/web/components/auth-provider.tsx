@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { UserProfile } from "@saving/shared";
-import { apiRequest } from "@/lib/api";
+import { ApiClientError, apiRequest, setApiAccessToken, subscribeApiAccessToken } from "@/lib/api";
 
 interface AuthResponse { user: UserProfile; accessToken: string; }
 
@@ -18,15 +18,34 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+async function restoreSession(): Promise<AuthResponse> {
+  let lastError: unknown = new Error("Không thể khôi phục phiên đăng nhập.");
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await apiRequest<AuthResponse>("/auth/refresh", { method: "POST" });
+    } catch (error) {
+      lastError = error;
+      if (error instanceof ApiClientError && error.status === 401) throw error;
+      if (attempt < 2) await new Promise((resolve) => window.setTimeout(resolve, 700 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => subscribeApiAccessToken((token) => {
+    setAccessToken(token);
+    if (!token) setUser(null);
+  }), []);
+
   useEffect(() => {
-    void apiRequest<AuthResponse>("/auth/refresh", { method: "POST" })
-      .then((session) => { setUser(session.user); setAccessToken(session.accessToken); })
-      .catch(() => { setUser(null); setAccessToken(null); })
+    void restoreSession()
+      .then((session) => { setUser(session.user); setApiAccessToken(session.accessToken); })
+      .catch(() => { setUser(null); setApiAccessToken(null); })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -37,17 +56,17 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     async login(email, password) {
       const session = await apiRequest<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
       setUser(session.user);
-      setAccessToken(session.accessToken);
+      setApiAccessToken(session.accessToken);
     },
     async register(email, displayName, password) {
       const session = await apiRequest<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify({ email, displayName, password }) });
       setUser(session.user);
-      setAccessToken(session.accessToken);
+      setApiAccessToken(session.accessToken);
     },
     async logout() {
       await apiRequest<null>("/auth/logout", { method: "POST" }).catch(() => undefined);
       setUser(null);
-      setAccessToken(null);
+      setApiAccessToken(null);
     },
   }), [accessToken, isLoading, user]);
 

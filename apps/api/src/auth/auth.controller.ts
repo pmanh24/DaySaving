@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { IsEmail, IsString, Matches, MinLength } from "class-validator";
-import type { Request, Response } from "express";
+import type { CookieOptions, Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import type { RequestWithUser } from "./auth.types";
 
@@ -48,7 +48,7 @@ export class AuthController {
   @Post("logout")
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     await this.auth.logout(request.cookies?.[REFRESH_COOKIE]);
-    response.clearCookie(REFRESH_COOKIE, { httpOnly: true, secure: process.env.COOKIE_SECURE === "true", sameSite: "lax", path: "/api/v1/auth" });
+    response.clearCookie(REFRESH_COOKIE, this.refreshCookieOptions());
     return { success: true, data: null };
   }
 
@@ -61,12 +61,20 @@ export class AuthController {
   }
 
   private setRefreshCookie(response: Response, refreshToken: string): void {
-    response.cookie(REFRESH_COOKIE, refreshToken, {
+    response.cookie(REFRESH_COOKIE, refreshToken, { ...this.refreshCookieOptions(), maxAge: 30 * 24 * 60 * 60 * 1000 });
+  }
+
+  private refreshCookieOptions(): CookieOptions {
+    const configuredSameSite = process.env.COOKIE_SAME_SITE?.toLowerCase();
+    const sameSite: "strict" | "lax" | "none" = configuredSameSite === "strict" || configuredSameSite === "none" || configuredSameSite === "lax"
+      ? configuredSameSite
+      : process.env.NODE_ENV === "production" || process.env.COOKIE_SECURE === "true" ? "none" : "lax";
+    return {
       httpOnly: true,
-      secure: process.env.COOKIE_SECURE === "true",
-      sameSite: "lax",
+      secure: process.env.COOKIE_SECURE === "true" || sameSite === "none",
+      sameSite,
+      domain: process.env.COOKIE_DOMAIN?.trim() || undefined,
       path: "/api/v1/auth",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    };
   }
 }

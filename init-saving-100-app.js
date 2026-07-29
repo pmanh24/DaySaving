@@ -12,13 +12,16 @@
  * Script tạo:
  *
  * 1. users
- * 2. saving_plans
- * 3. saving_slots
- * 4. saving_payments
- * 5. saving_day_records
- * 6. payos_webhook_events
- * 7. saving_events
- * 8. counters
+ * 2. saving_challenges
+ * 3. saving_checkins
+ * 4. saving_plans
+ * 5. saving_slots
+ * 6. saving_payments
+ * 7. challenge_payments
+ * 8. saving_day_records
+ * 9. payos_webhook_events
+ * 10. saving_events
+ * 11. counters
  *
  * Có thể chạy lại script:
  * - Collection đã tồn tại: cập nhật validator.
@@ -292,7 +295,285 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 2. COLLECTION SAVING_PLANS
+ * 2. COLLECTION SAVING_CHALLENGES
+ *
+ * Challenge board 100 o tiet kiem cua nguoi dung.
+ * ============================================================ */
+
+createOrUpdateCollection("saving_challenges", {
+    $jsonSchema: {
+        bsonType: "object",
+        title: "Saving Challenge",
+
+        required: [
+            "userId",
+            "name",
+            "targetAmount",
+            "startDate",
+            "createdAt",
+            "updatedAt"
+        ],
+
+        properties: {
+            _id: {
+                bsonType: "objectId"
+            },
+
+            userId: {
+                bsonType: "objectId"
+            },
+
+            name: {
+                bsonType: "string"
+            },
+
+            minNumber: positiveInteger,
+
+            maxNumber: positiveInteger,
+
+            unitAmount: positiveInteger,
+
+            targetAmount: positiveInteger,
+
+            savedAmount: nonNegativeInteger,
+
+            completedCells: {
+                bsonType: [
+                    "int",
+                    "long",
+                    "double",
+                    "decimal"
+                ],
+                minimum: 0,
+                maximum: 100,
+                multipleOf: 1
+            },
+
+            mode: {
+                enum: [
+                    "ONE_PER_DAY",
+                    "FLEXIBLE"
+                ]
+            },
+
+            selectionMode: {
+                enum: [
+                    "FREE",
+                    "RANDOM",
+                    "ASCENDING",
+                    "DESCENDING"
+                ]
+            },
+
+            startDate: {
+                bsonType: "date"
+            },
+
+            completedAt: nullableDate,
+
+            status: {
+                enum: [
+                    "ACTIVE",
+                    "COMPLETED",
+                    "ARCHIVED"
+                ]
+            },
+
+            createdAt: {
+                bsonType: "date"
+            },
+
+            updatedAt: {
+                bsonType: "date"
+            },
+
+            __v: {
+                bsonType: [
+                    "int",
+                    "long",
+                    "double"
+                ]
+            }
+        }
+    }
+});
+
+createIndexIfMissing(
+    "saving_challenges",
+    {
+        userId: 1,
+        status: 1
+    },
+    {
+        name: "userId_1_status_1"
+    }
+);
+
+createIndexIfMissing(
+    "saving_challenges",
+    {
+        userId: 1,
+        createdAt: -1
+    },
+    {
+        name: "userId_1_createdAt_-1"
+    }
+);
+
+
+/* ============================================================
+ * 3. COLLECTION SAVING_CHECKINS
+ *
+ * Cac lan check-in cua challenge, bao gom ca trang thai reverse.
+ * ============================================================ */
+
+createOrUpdateCollection("saving_checkins", {
+    $jsonSchema: {
+        bsonType: "object",
+        title: "Saving Check-in",
+
+        required: [
+            "challengeId",
+            "userId",
+            "number",
+            "amount",
+            "localDate",
+            "timezone",
+            "idempotencyKey",
+            "createdAt",
+            "updatedAt"
+        ],
+
+        properties: {
+            _id: {
+                bsonType: "objectId"
+            },
+
+            challengeId: {
+                bsonType: "objectId"
+            },
+
+            userId: {
+                bsonType: "objectId"
+            },
+
+            number: {
+                bsonType: [
+                    "int",
+                    "long",
+                    "double",
+                    "decimal"
+                ],
+                minimum: 1,
+                maximum: 100,
+                multipleOf: 1
+            },
+
+            amount: positiveInteger,
+
+            localDate: {
+                bsonType: "string",
+                pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+
+            timezone: {
+                bsonType: "string",
+                minLength: 3,
+                maxLength: 64
+            },
+
+            idempotencyKey: {
+                bsonType: "string",
+                minLength: 16,
+                maxLength: 128
+            },
+
+            status: {
+                enum: [
+                    "COMPLETED",
+                    "REVERSED"
+                ]
+            },
+
+            reversedAt: nullableDate,
+
+            reverseReason: nullableString,
+
+            createdAt: {
+                bsonType: "date"
+            },
+
+            updatedAt: {
+                bsonType: "date"
+            },
+
+            __v: {
+                bsonType: [
+                    "int",
+                    "long",
+                    "double"
+                ]
+            }
+        }
+    }
+});
+
+createIndexIfMissing(
+    "saving_checkins",
+    {
+        challengeId: 1,
+        number: 1
+    },
+    {
+        name: "challengeId_1_number_1",
+        unique: true,
+        partialFilterExpression: {
+            status: "COMPLETED"
+        }
+    }
+);
+
+createIndexIfMissing(
+    "saving_checkins",
+    {
+        challengeId: 1,
+        localDate: 1
+    },
+    {
+        name: "challengeId_1_localDate_1",
+        unique: true,
+        partialFilterExpression: {
+            status: "COMPLETED"
+        }
+    }
+);
+
+createIndexIfMissing(
+    "saving_checkins",
+    {
+        userId: 1,
+        idempotencyKey: 1
+    },
+    {
+        name: "userId_1_idempotencyKey_1",
+        unique: true
+    }
+);
+
+createIndexIfMissing(
+    "saving_checkins",
+    {
+        challengeId: 1,
+        createdAt: -1
+    },
+    {
+        name: "challengeId_1_createdAt_-1"
+    }
+);
+
+
+/* ============================================================
+ * 4. COLLECTION SAVING_PLANS
  *
  * Lưu kế hoạch tiết kiệm từ 1 đến 300 ngày/lượt.
  * ============================================================ */
@@ -528,7 +809,7 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 3. COLLECTION SAVING_SLOTS
+ * 5. COLLECTION SAVING_SLOTS
  *
  * Danh sách khoản tiền người dùng được chọn.
  *
@@ -732,7 +1013,7 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 4. COLLECTION SAVING_PAYMENTS
+ * 6. COLLECTION SAVING_PAYMENTS
  *
  * Lưu payment link và QR payOS.
  * ============================================================ */
@@ -1028,7 +1309,218 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 5. COLLECTION SAVING_DAY_RECORDS
+ * 7. COLLECTION CHALLENGE_PAYMENTS
+ *
+ * Payment payOS cho tung o trong challenge 100 ngay.
+ * ============================================================ */
+
+createOrUpdateCollection("challenge_payments", {
+    $jsonSchema: {
+        bsonType: "object",
+        title: "Challenge Payment",
+
+        required: [
+            "userId",
+            "challengeId",
+            "number",
+            "provider",
+            "orderCode",
+            "amount",
+            "currency",
+            "description",
+            "status",
+            "idempotencyKey",
+            "expiresAt",
+            "createdAt",
+            "updatedAt"
+        ],
+
+        properties: {
+            _id: {
+                bsonType: "objectId"
+            },
+
+            userId: {
+                bsonType: "objectId"
+            },
+
+            challengeId: {
+                bsonType: "objectId"
+            },
+
+            number: {
+                bsonType: [
+                    "int",
+                    "long",
+                    "double",
+                    "decimal"
+                ],
+                minimum: 1,
+                maximum: 100,
+                multipleOf: 1
+            },
+
+            provider: {
+                enum: ["PAYOS"]
+            },
+
+            orderCode: positiveInteger,
+
+            paymentLinkId: nullableString,
+
+            amount: positiveInteger,
+
+            currency: {
+                enum: ["VND"]
+            },
+
+            description: {
+                bsonType: "string",
+                minLength: 1,
+                maxLength: 25
+            },
+
+            checkoutUrl: nullableString,
+
+            qrCode: nullableString,
+
+            status: {
+                enum: [
+                    "CREATING",
+                    "PENDING",
+                    "PROCESSING",
+                    "PAID",
+                    "CANCELLED",
+                    "EXPIRED",
+                    "FAILED"
+                ]
+            },
+
+            idempotencyKey: {
+                bsonType: "string",
+                minLength: 16,
+                maxLength: 128
+            },
+
+            expiresAt: {
+                bsonType: "date"
+            },
+
+            paidAt: nullableDate,
+
+            cancelledAt: nullableDate,
+
+            lastReconciledAt: nullableDate,
+
+            providerReference: nullableString,
+
+            transactionDateTime: nullableString,
+
+            errorCode: nullableString,
+
+            errorMessage: nullableString,
+
+            createdAt: {
+                bsonType: "date"
+            },
+
+            updatedAt: {
+                bsonType: "date"
+            },
+
+            __v: {
+                bsonType: [
+                    "int",
+                    "long",
+                    "double"
+                ]
+            }
+        }
+    }
+});
+
+createIndexIfMissing(
+    "challenge_payments",
+    {
+        orderCode: 1
+    },
+    {
+        name: "uq_challenge_payments_orderCode",
+        unique: true
+    }
+);
+
+createIndexIfMissing(
+    "challenge_payments",
+    {
+        paymentLinkId: 1
+    },
+    {
+        name: "uq_challenge_payments_paymentLinkId",
+        unique: true,
+        sparse: true
+    }
+);
+
+createIndexIfMissing(
+    "challenge_payments",
+    {
+        userId: 1,
+        idempotencyKey: 1
+    },
+    {
+        name: "uq_challenge_payments_user_idempotencyKey",
+        unique: true
+    }
+);
+
+createIndexIfMissing(
+    "challenge_payments",
+    {
+        challengeId: 1,
+        number: 1,
+        status: 1
+    },
+    {
+        name: "idx_challenge_payments_challenge_number_status"
+    }
+);
+
+createIndexIfMissing(
+    "challenge_payments",
+    {
+        challengeId: 1,
+        number: 1
+    },
+    {
+        name: "uq_challenge_payments_one_active_per_cell",
+        unique: true,
+        partialFilterExpression: {
+            status: {
+                $in: [
+                    "CREATING",
+                    "PENDING",
+                    "PROCESSING"
+                ]
+            }
+        }
+    }
+);
+
+createIndexIfMissing(
+    "challenge_payments",
+    {
+        expiresAt: 1,
+        status: 1
+    },
+    {
+        name: "idx_challenge_payments_expiresAt_status"
+    }
+);
+
+
+/* ============================================================
+ * 8. COLLECTION SAVING_DAY_RECORDS
  *
  * Ghi nhận ngày/lượt tiết kiệm đã hoàn thành.
  * Chỉ tạo sau khi payOS xác nhận PAID hoặc ghi nhận manual.
@@ -1182,7 +1674,7 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 6. COLLECTION PAYOS_WEBHOOK_EVENTS
+ * 9. COLLECTION PAYOS_WEBHOOK_EVENTS
  *
  * Lưu thông tin xử lý webhook payOS.
  * Dùng để chống webhook bị xử lý trùng.
@@ -1198,7 +1690,8 @@ createOrUpdateCollection("payos_webhook_events", {
             "verified",
             "processingStatus",
             "receivedAt",
-            "createdAt"
+            "createdAt",
+            "updatedAt"
         ],
 
         properties: {
@@ -1243,6 +1736,10 @@ createOrUpdateCollection("payos_webhook_events", {
             processedAt: nullableDate,
 
             createdAt: {
+                bsonType: "date"
+            },
+
+            updatedAt: {
                 bsonType: "date"
             },
 
@@ -1318,7 +1815,7 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 7. COLLECTION SAVING_EVENTS
+ * 10. COLLECTION SAVING_EVENTS
  *
  * Audit log nghiệp vụ.
  * ============================================================ */
@@ -1332,7 +1829,8 @@ createOrUpdateCollection("saving_events", {
             "userId",
             "planId",
             "type",
-            "createdAt"
+            "createdAt",
+            "updatedAt"
         ],
 
         properties: {
@@ -1402,6 +1900,10 @@ createOrUpdateCollection("saving_events", {
                 bsonType: "date"
             },
 
+            updatedAt: {
+                bsonType: "date"
+            },
+
             __v: {
                 bsonType: [
                     "int",
@@ -1457,7 +1959,7 @@ createIndexIfMissing(
 
 
 /* ============================================================
- * 8. COLLECTION COUNTERS
+ * 11. COLLECTION COUNTERS
  *
  * Sinh orderCode payOS duy nhất.
  * ============================================================ */
@@ -1469,6 +1971,7 @@ createOrUpdateCollection("counters", {
 
         required: [
             "sequenceValue",
+            "createdAt",
             "updatedAt"
         ],
 
@@ -1480,6 +1983,10 @@ createOrUpdateCollection("counters", {
             },
 
             sequenceValue: nonNegativeInteger,
+
+            createdAt: {
+                bsonType: "date"
+            },
 
             updatedAt: {
                 bsonType: "date"
@@ -1500,6 +2007,7 @@ db.counters.updateOne(
     {
         $setOnInsert: {
             sequenceValue: 100000,
+            createdAt: new Date(),
             updatedAt: new Date()
         }
     },
@@ -1532,9 +2040,12 @@ print("============================================================");
 
 const collectionsToCheck = [
     "users",
+    "saving_challenges",
+    "saving_checkins",
     "saving_plans",
     "saving_slots",
     "saving_payments",
+    "challenge_payments",
     "saving_day_records",
     "payos_webhook_events",
     "saving_events",

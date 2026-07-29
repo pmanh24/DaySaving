@@ -19,7 +19,7 @@ UserSchema.index({ status: 1, createdAt: -1 }, { name: "idx_users_status_created
 
 @Schema({ timestamps: true, versionKey: "__v", collection: "saving_challenges" })
 export class ChallengeDocument {
-  @Prop({ required: true }) userId!: string;
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId }) userId!: Types.ObjectId;
   @Prop({ required: true }) name!: string;
   @Prop({ default: 1 }) minNumber!: number;
   @Prop({ default: 100 }) maxNumber!: number;
