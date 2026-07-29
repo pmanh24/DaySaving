@@ -13,6 +13,31 @@ button { cursor:pointer; }
 .page-content { position:relative; z-index:2; margin-top:-48px; padding:22px 18px calc(env(safe-area-inset-bottom) + 96px); min-height:calc(100dvh - 190px); background:var(--surface); border-radius:32px 32px 0 0; }
 .content-width { max-width:860px; margin:0 auto; }
 .hero-row,.section-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+
+/* Monochrome product surface */
+:root { --background:#f5f5f3; --surface:#fff; --surface-soft:#f7f7f5; --navy-950:#111; --navy-900:#111; --navy-800:#222; --blue:#111; --indigo:#111; --purple:#333; --text:#111; --muted:#666; --faint:#888; --border:#e5e5e2; --success:#111; --danger:#111; --primary-gradient:linear-gradient(100deg,#111,#333); }
+html body { background:#f5f5f3; color:#111; }
+.app-shell { background:#fff; }
+body .navy-hero { color:#111; background:#fff; border-bottom:1px solid #e5e5e2; }
+body .navy-hero:after { display:none; }
+body .hero-title,body .hero-amount { color:#111; }
+body .eyebrow,body .hero-subtitle { color:#666; }
+body .button.primary,body .progress-fill,body .cell.done,body .slot-card.paid { background:#111; color:#fff; }
+body .button.primary { border-color:#111; box-shadow:none; }
+body .progress-track { background:#ececea; }
+body .bottom-nav { background:#fff; border-color:#e5e5e2; box-shadow:0 -8px 24px #1111110a; }
+body .nav-item.active { background:transparent; color:#111; }
+body .nav-item.active svg { color:#111; }
+body .auth-shell,body .auth-loading { background:#f5f5f3; }
+body .auth-card { border:1px solid #e5e5e2; box-shadow:none; }
+body .auth-brand-icon,body .wizard-icon,body .today-card,body .rule-card,body .attention-card,body .stat-icon { background:#111; color:#fff; }
+body .auth-brand .eyebrow,body .auth-switch,body .mode-option > svg:first-child,body .slot-card span,body .slot-summary a { color:#111; }
+body .mode-option.selected,body .preset.selected { border-color:#111; background:#f1f1ef; color:#111; }
+body .mode-option.selected > svg:first-child { color:#111; }
+body .slot-card.reserved { border-color:#bbb; background:#f1f1ef; color:#444; }
+body .notice-card { background:#f1f1ef; color:#111; }
+body .pill-input:focus,body .custom-textarea:focus { border-color:#111; box-shadow:0 0 0 4px #11111112; }
+body .return-card { background:#f1f1ef; color:#111; }
 .eyebrow { margin:0 0 8px; color:#bdbdff; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 .hero-title { margin:0; font-size:26px; line-height:1.15; letter-spacing:-.04em; }
 .hero-subtitle { margin:8px 0 0; color:#d1d1ff; font-size:13px; line-height:1.5; }

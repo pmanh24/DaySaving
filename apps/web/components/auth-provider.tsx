@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { UserProfile } from "@saving/shared";
-import { apiRequest, isDemoMode } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 
 interface AuthResponse { user: UserProfile; accessToken: string; }
 
@@ -11,7 +11,6 @@ interface AuthContextValue {
   user: UserProfile | null;
   accessToken: string | null;
   isLoading: boolean;
-  isDemoMode: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, displayName: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -22,10 +21,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(!isDemoMode);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemoMode) return;
     void apiRequest<AuthResponse>("/auth/refresh", { method: "POST" })
       .then((session) => { setUser(session.user); setAccessToken(session.accessToken); })
       .catch(() => { setUser(null); setAccessToken(null); })
@@ -36,7 +34,6 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     user,
     accessToken,
     isLoading,
-    isDemoMode,
     async login(email, password) {
       const session = await apiRequest<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
       setUser(session.user);
@@ -48,7 +45,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       setAccessToken(session.accessToken);
     },
     async logout() {
-      if (!isDemoMode) await apiRequest<null>("/auth/logout", { method: "POST" }).catch(() => undefined);
+      await apiRequest<null>("/auth/logout", { method: "POST" }).catch(() => undefined);
       setUser(null);
       setAccessToken(null);
     },
@@ -70,10 +67,10 @@ export function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) 
   const isAuthPage = pathname === "/login";
 
   useEffect(() => {
-    if (!isDemoMode && !isLoading && !user && !isAuthPage) router.replace("/login");
+    if (!isLoading && !user && !isAuthPage) router.replace("/login");
   }, [isAuthPage, isLoading, router, user]);
 
-  if (isDemoMode || isAuthPage) return children;
+  if (isAuthPage) return children;
   if (isLoading || !user) return <main className="auth-loading"><div className="auth-card"><strong>Đang kiểm tra phiên đăng nhập…</strong><span>Vui lòng chờ một chút.</span></div></main>;
   return children;
 }

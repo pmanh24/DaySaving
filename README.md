@@ -1,11 +1,10 @@
-<<<<<<< HEAD
 # 100 Days Saving
 
-Ứng dụng PWA mobile-first theo dõi thử thách tiết kiệm 100 ô. Monorepo dùng pnpm gồm:
+Ứng dụng PWA mobile-first để lập và theo dõi kế hoạch tiết kiệm 1–300 ngày.
 
-- `apps/web`: Next.js App Router, Tailwind-style CSS tokens, TanStack Query, Zustand, React Hook Form và Zod.
-- `apps/api`: NestJS REST API `/api/v1`, Swagger, validation, Helmet, throttling, JWT HttpOnly cookie và repository in-memory.
-- `packages/shared`: các kiểu dữ liệu dùng chung.
+- `apps/web`: Next.js App Router, giao diện minimalism trắng–đen, gọi trực tiếp REST API.
+- `apps/api`: NestJS `/api/v1`, JWT access token, refresh token HttpOnly cookie, validation, throttling và payOS.
+- `packages/shared`: kiểu dữ liệu dùng chung giữa web và API.
 
 ## Chạy local
 
@@ -14,31 +13,34 @@ pnpm install
 pnpm dev
 ```
 
-Mở `http://localhost:3000`. Mặc định frontend chạy demo mode nên không cần database. Swagger ở `http://localhost:4000/docs` và health check ở `http://localhost:4000/health`.
+Frontend: `http://localhost:3000`
+API: `http://localhost:4000`
+Swagger: `http://localhost:4000/docs`
+Mongo health: `http://localhost:4000/api/v1/health/database`
 
-## Kết nối MongoDB sau
+Frontend luôn yêu cầu phiên đăng nhập backend. Hãy tạo `apps/web/.env.local` với:
 
-Điền `MONGODB_URI` và các JWT secret trong biến môi trường backend. Repository hiện tại cố ý dùng in-memory để UI/API chạy ngay khi chưa có DB; schema và index MongoDB nằm trong `apps/api/src/database/schemas`. Thay provider `SavingRepository` bằng adapter Mongoose tại `apps/api/src/database` khi có connection string.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+```
 
-## Deploy
+API cần `apps/api/.env` với `MONGODB_URI`, các JWT secret và cấu hình payOS. Database mặc định là `saving_100_app`.
 
-- Vercel: root directory `apps/web`, đặt `NEXT_PUBLIC_API_URL` và tắt `NEXT_PUBLIC_DEMO_MODE`.
-- Render: root directory `apps/api`, build `pnpm install --frozen-lockfile && pnpm build`, start `pnpm start:prod`.
-- MongoDB Atlas: dùng database user riêng, allowlist IP phù hợp, không commit URI.
+## Auth và dữ liệu
 
-Không lưu token dài hạn trong localStorage và không gửi `amount` từ frontend; backend tự tính `number * unitAmount`.
+Người dùng đăng ký/đăng nhập qua backend. Access token được giữ trong state của frontend; refresh token được lưu bằng cookie HttpOnly và được xoay vòng khi refresh. User, challenge, check-in, kế hoạch, slot, payment và day record được lưu qua các collection MongoDB tương ứng.
 
-## Kế hoạch linh hoạt 1–300 ngày
+## Lập kế hoạch
 
-Luồng mới nằm ở `/plan/new` và `/plan`:
+Luồng nằm ở `/plan/new` và `/plan`:
 
-- Chọn 1–300 lượt đóng tiền, preset 30/100/300 hoặc số tùy chỉnh.
-- Sinh slot bằng `CLASSIC_SEQUENCE`, `TARGET_AUTO_DISTRIBUTION` hoặc `CUSTOM_LIST`.
-- Mỗi ngày chọn một slot `AVAILABLE`; slot không gắn cứng với ngày.
-- Slot chuyển `RESERVED` khi tạo payment, chỉ chuyển `PAID` sau webhook/reconcile.
-- Slot `PAID` không được chọn lại; amount trùng vẫn là các slot khác nhau.
+- Chọn 1–300 lượt đóng tiền, preset 30/100/300 hoặc nhập số tùy chỉnh.
+- Chọn `CLASSIC_SEQUENCE`, `TARGET_AUTO_DISTRIBUTION` hoặc `CUSTOM_LIST`.
+- Bản xem trước được tính bởi `POST /api/v1/saving-plans/preview`; frontend không tự quyết định số tiền cuối cùng.
+- Slot được tạo ở backend, chuyển `AVAILABLE → RESERVED → PAID` theo payment đã xác minh.
+- Amount trùng nhau vẫn là các slot riêng; không gán cứng amount vào ngày.
 
-Backend endpoint chính:
+Endpoint chính:
 
 ```text
 POST /api/v1/saving-plans/preview
@@ -51,13 +53,6 @@ POST /api/v1/payments/:paymentId/cancel
 POST /api/v1/integrations/payos/webhook
 ```
 
-## payOS
+Khi có đủ `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, API dùng SDK payOS thật. Nếu chưa có credentials ở môi trường development, API dùng provider local để có thể kiểm thử luồng backend; trạng thái hoàn thành vẫn chỉ do backend xác nhận.
 
-`PayosService` dùng SDK `@payos/node` khi đủ ba secret `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`. Khi chạy local chưa có secret, hệ thống trả payment QR mock để kiểm thử UI; nút “Mô phỏng webhook payOS (local)” chỉ phục vụ demo và không được dùng cho production.
-
-Return URL không phải nguồn sự thật. Frontend chỉ hiển thị trạng thái tạm và backend phải đọc database/reconcile hoặc xử lý webhook đã verify. `PAYMENT_DESTINATION_MODE` mặc định là `SINGLE_OWNER_CHANNEL`; không bật `PLATFORM_CHANNEL` âm thầm.
-
-Các schema mới nằm trong `apps/api/src/database/schemas.ts`: `saving_plans`, `saving_slots`, `saving_payments`, `saving_day_records` và `payos_webhook_events`.
-=======
-# DaySaving
->>>>>>> 4e70a331d9595d603000e67e0621b652d89a1597
+Không commit URI MongoDB hoặc secret vào Git. Nếu secret từng xuất hiện trong file mẫu cũ, hãy rotate secret đó trên MongoDB Atlas.

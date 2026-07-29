@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { randomUUID } from "node:crypto";
+import { Types } from "mongoose";
 import type { AmountGenerationMode, SavingSlotStatus } from "@saving/shared";
 import { ApiError } from "../common/api-error";
 import { localDate } from "../common/date";
@@ -10,7 +10,6 @@ export interface CreatePlanInput extends AmountGenerationInput { name: string; s
 
 @Injectable()
 export class SavingPlansService {
-  private readonly demoUser = "demo-user";
   constructor(private readonly store: SavingPlansStore) {}
 
   preview(input: AmountGenerationInput) { const generated = generateAmounts(input); return { ...generated, slotCount: generated.amounts.length, sample: generated.amounts.slice(0, 12) }; }
@@ -25,11 +24,11 @@ export class SavingPlansService {
     if (input.startDate < today) throw new ApiError("PLAN_START_DATE_INVALID", "Ngày bắt đầu không được ở quá khứ.");
     const generated = generateAmounts(input);
     const now = new Date().toISOString();
-    const id = randomUUID();
+    const id = new Types.ObjectId().toString();
     const status = input.startDate === today ? "ACTIVE" : "SCHEDULED";
     const plan = { id, userId, name, durationDays: input.durationDays, currentDayIndex: 1, completedDays: 0, generationMode: input.generationMode, targetAmount: generated.targetAmount, totalSavedAmount: 0, remainingAmount: generated.targetAmount, unitAmount: input.unitAmount ?? null, minAmount: input.minAmount ?? generated.minAmount, maxAmount: input.maxAmount ?? generated.maxAmount, stepAmount: input.stepAmount ?? null, progressMode: input.progressMode ?? "FLEXIBLE_CONTRIBUTION_DAYS", confirmationMode: input.confirmationMode ?? "PAYOS_ONLY", paymentDestinationMode: input.paymentDestinationMode ?? "SINGLE_OWNER_CHANNEL", paymentExpiresInMinutes: input.paymentExpiresInMinutes ?? Number(process.env.PAYOS_DEFAULT_EXPIRE_MINUTES ?? 15), timezone: input.timezone || "Asia/Ho_Chi_Minh", startDate: input.startDate, status, createdAt: now, activatedAt: status === "ACTIVE" ? now : null, completedAt: null } as const;
-    this.store.plans.set(id, plan);
-    generated.amounts.forEach((amount, index) => this.store.slots.set(`${id}-${index + 1}`, { id: `${id}-${index + 1}`, userId, planId: id, slotIndex: index + 1, amount, status: "AVAILABLE", reservedByPaymentId: null, reservationExpiresAt: null, assignedDayIndex: null, paidPaymentId: null, completedAt: null }));
+    this.store.addPlan(plan);
+    generated.amounts.forEach((amount, index) => { const slotId = new Types.ObjectId().toString(); this.store.addSlot({ id: slotId, userId, planId: id, slotIndex: index + 1, amount, status: "AVAILABLE", reservedByPaymentId: null, reservationExpiresAt: null, assignedDayIndex: null, paidPaymentId: null, completedAt: null }); });
     return { plan, slotCount: generated.amounts.length };
   }
 

@@ -13,7 +13,7 @@ export class PayosService {
   get isConfigured(): boolean { return this.client !== null; }
 
   async createPaymentLink(input: CreatePayosPaymentInput): Promise<CreatedPayosPayment> {
-    if (!this.client) return { paymentLinkId: `mock-${input.orderCode}`, checkoutUrl: `${process.env.PAYOS_RETURN_URL ?? "http://localhost:3000/payment/return"}?orderCode=${input.orderCode}&mockStatus=PENDING`, qrCode: `mock-payos:${input.orderCode}:${input.amount}`, status: "PENDING" };
+    if (!this.client) return { paymentLinkId: `local-${input.orderCode}`, checkoutUrl: `${process.env.PAYOS_RETURN_URL ?? "http://localhost:3000/payment/return"}?orderCode=${input.orderCode}&localStatus=PENDING`, qrCode: `local-payos:${input.orderCode}:${input.amount}`, status: "PENDING" };
     const result = await this.client.paymentRequests.create(input);
     return { paymentLinkId: result.paymentLinkId ?? null, checkoutUrl: result.checkoutUrl ?? null, qrCode: result.qrCode ?? null, status: "PENDING" };
   }

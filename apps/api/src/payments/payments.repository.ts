@@ -8,5 +8,6 @@ export class PaymentsRepository {
   findByIdempotency(userId: string, key: string): SavingPayment | null { return this.store.findByIdempotency(userId, key); }
   findByOrderCode(orderCode: number): SavingPayment | null { return [...this.store.payments.values()].find((payment) => payment.orderCode === orderCode) ?? null; }
   add(payment: SavingPayment): void { this.store.addPayment(payment); }
+  save(payment: SavingPayment): void { this.store.addPayment(payment); }
   get(userId: string, paymentId: string): SavingPayment { return this.store.getPayment(userId, paymentId); }
 }
