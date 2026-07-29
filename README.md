@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 100 Days Saving
 
 Ứng dụng PWA mobile-first theo dõi thử thách tiết kiệm 100 ô. Monorepo dùng pnpm gồm:
@@ -57,3 +58,6 @@ POST /api/v1/integrations/payos/webhook
 Return URL không phải nguồn sự thật. Frontend chỉ hiển thị trạng thái tạm và backend phải đọc database/reconcile hoặc xử lý webhook đã verify. `PAYMENT_DESTINATION_MODE` mặc định là `SINGLE_OWNER_CHANNEL`; không bật `PLATFORM_CHANNEL` âm thầm.
 
 Các schema mới nằm trong `apps/api/src/database/schemas.ts`: `saving_plans`, `saving_slots`, `saving_payments`, `saving_day_records` và `payos_webhook_events`.
+=======
+# DaySaving
+>>>>>>> 4e70a331d9595d603000e67e0621b652d89a1597
