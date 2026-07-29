@@ -1,0 +1,12 @@
+{
+  "name": "saving-100",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @saving/web --filter @saving/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter @saving/api test"
+  }
+}
