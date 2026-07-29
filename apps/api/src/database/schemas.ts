@@ -151,6 +151,41 @@ SavingPaymentSchema.index(
   { name: "uq_saving_payments_one_active_or_paid_per_slot", unique: true, partialFilterExpression: { status: { $in: ["CREATING", "PENDING", "PROCESSING", "PAID"] } } },
 );
 
+@Schema({ timestamps: true, versionKey: "__v", collection: "challenge_payments" })
+export class ChallengePaymentDocument {
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId }) userId!: Types.ObjectId;
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId }) challengeId!: Types.ObjectId;
+  @Prop({ required: true, min: 1, max: 100 }) number!: number;
+  @Prop({ default: "PAYOS", enum: ["PAYOS"] }) provider!: string;
+  @Prop({ required: true, min: 1 }) orderCode!: number;
+  @Prop({ default: null, type: String }) paymentLinkId!: string | null;
+  @Prop({ required: true, min: 1 }) amount!: number;
+  @Prop({ default: "VND", enum: ["VND"] }) currency!: string;
+  @Prop({ required: true, minlength: 1, maxlength: 25 }) description!: string;
+  @Prop({ default: null, type: String }) checkoutUrl!: string | null;
+  @Prop({ default: null, type: String }) qrCode!: string | null;
+  @Prop({ default: "CREATING", enum: ["CREATING", "PENDING", "PROCESSING", "PAID", "CANCELLED", "EXPIRED", "FAILED"] }) status!: string;
+  @Prop({ required: true, minlength: 16, maxlength: 128 }) idempotencyKey!: string;
+  @Prop({ required: true }) expiresAt!: Date;
+  @Prop({ default: null, type: Date }) paidAt!: Date | null;
+  @Prop({ default: null, type: Date }) cancelledAt!: Date | null;
+  @Prop({ default: null, type: Date }) lastReconciledAt!: Date | null;
+  @Prop({ default: null, type: String }) providerReference!: string | null;
+  @Prop({ default: null, type: String }) transactionDateTime!: string | null;
+  @Prop({ default: null, type: String }) errorCode!: string | null;
+  @Prop({ default: null, type: String }) errorMessage!: string | null;
+}
+export const ChallengePaymentSchema = SchemaFactory.createForClass(ChallengePaymentDocument);
+ChallengePaymentSchema.index({ orderCode: 1 }, { name: "uq_challenge_payments_orderCode", unique: true });
+ChallengePaymentSchema.index({ paymentLinkId: 1 }, { name: "uq_challenge_payments_paymentLinkId", unique: true, sparse: true });
+ChallengePaymentSchema.index({ userId: 1, idempotencyKey: 1 }, { name: "uq_challenge_payments_user_idempotencyKey", unique: true });
+ChallengePaymentSchema.index({ challengeId: 1, number: 1, status: 1 }, { name: "idx_challenge_payments_challenge_number_status" });
+ChallengePaymentSchema.index(
+  { challengeId: 1, number: 1 },
+  { name: "uq_challenge_payments_one_active_per_cell", unique: true, partialFilterExpression: { status: { $in: ["CREATING", "PENDING", "PROCESSING"] } } },
+);
+ChallengePaymentSchema.index({ expiresAt: 1, status: 1 }, { name: "idx_challenge_payments_expiresAt_status" });
+
 @Schema({ timestamps: true, versionKey: "__v", collection: "saving_day_records" })
 export class SavingDayRecordDocument {
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId }) userId!: Types.ObjectId;

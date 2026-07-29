@@ -45,6 +45,30 @@ export interface Checkin {
   reversedAt?: string | null;
 }
 
+export interface ChallengePayment {
+  id: string;
+  userId: string;
+  challengeId: string;
+  number: number;
+  provider: "PAYOS";
+  orderCode: number;
+  paymentLinkId: string | null;
+  amount: number;
+  currency: "VND";
+  description: string;
+  checkoutUrl: string | null;
+  qrCode: string | null;
+  status: PaymentStatus;
+  idempotencyKey: string;
+  expiresAt: string;
+  paidAt: string | null;
+  cancelledAt: string | null;
+  lastReconciledAt: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
 export type AmountGenerationMode = "CLASSIC_SEQUENCE" | "TARGET_AUTO_DISTRIBUTION" | "CUSTOM_LIST";
 export type ProgressMode = "FLEXIBLE_CONTRIBUTION_DAYS" | "CALENDAR_DAYS";
 export type SavingConfirmationMode = "PAYOS_ONLY" | "PAYOS_OR_MANUAL";

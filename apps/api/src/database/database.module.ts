@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
 import {
   CounterDocument, CounterSchema, PayosWebhookEventDocument, PayosWebhookEventSchema,
-  ChallengeDocument, ChallengeSchema, CheckinDocument, CheckinSchema, SavingDayRecordDocument, SavingDayRecordSchema, SavingPaymentDocument, SavingPaymentSchema, SavingPlanDocument, SavingPlanSchema, SavingSlotDocument, SavingSlotSchema,
+  ChallengeDocument, ChallengeSchema, CheckinDocument, CheckinSchema, ChallengePaymentDocument, ChallengePaymentSchema, SavingDayRecordDocument, SavingDayRecordSchema, SavingPaymentDocument, SavingPaymentSchema, SavingPlanDocument, SavingPlanSchema, SavingSlotDocument, SavingSlotSchema,
   SavingEventDocument, SavingEventSchema, UserDocument, UserSchema,
 } from "./schemas";
 
@@ -29,6 +29,7 @@ const DATABASE_NAME = "saving_100_app";
       { name: UserDocument.name, schema: UserSchema },
       { name: ChallengeDocument.name, schema: ChallengeSchema },
       { name: CheckinDocument.name, schema: CheckinSchema },
+      { name: ChallengePaymentDocument.name, schema: ChallengePaymentSchema },
       { name: SavingPlanDocument.name, schema: SavingPlanSchema },
       { name: SavingSlotDocument.name, schema: SavingSlotSchema },
       { name: SavingPaymentDocument.name, schema: SavingPaymentSchema },
