@@ -10,12 +10,27 @@ export class UserDocument {
   @Prop({ default: "Asia/Ho_Chi_Minh", minlength: 3, maxlength: 64 }) timezone!: string;
   @Prop({ default: "VND", enum: ["VND"] }) currency!: "VND";
   @Prop({ default: null, type: String }) refreshTokenHash!: string | null;
+  @Prop({ default: false }) pushReminderEnabled!: boolean;
+  @Prop({ default: "15:10", match: /^([01]\d|2[0-3]):[0-5]\d$/ }) pushReminderTime!: string;
   @Prop({ default: "ACTIVE", enum: ["ACTIVE", "DISABLED"] }) status!: "ACTIVE" | "DISABLED";
 }
 export type UserDoc = HydratedDocument<UserDocument>;
 export const UserSchema = SchemaFactory.createForClass(UserDocument);
 UserSchema.index({ email: 1 }, { name: "uq_users_email", unique: true });
 UserSchema.index({ status: 1, createdAt: -1 }, { name: "idx_users_status_createdAt" });
+
+@Schema({ timestamps: true, versionKey: "__v", collection: "push_subscriptions" })
+export class PushSubscriptionDocument {
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId }) userId!: Types.ObjectId;
+  @Prop({ required: true, unique: true, maxlength: 2048 }) endpoint!: string;
+  @Prop({ required: true, type: Object }) keys!: { p256dh: string; auth: string };
+  @Prop({ default: null, type: Number }) expirationTime!: number | null;
+  @Prop({ default: null, type: String, maxlength: 512 }) userAgent!: string | null;
+  @Prop({ default: null, type: Date }) lastUsedAt!: Date | null;
+}
+export const PushSubscriptionSchema = SchemaFactory.createForClass(PushSubscriptionDocument);
+PushSubscriptionSchema.index({ endpoint: 1 }, { name: "uq_push_subscriptions_endpoint", unique: true });
+PushSubscriptionSchema.index({ userId: 1, createdAt: -1 }, { name: "idx_push_subscriptions_user_createdAt" });
 
 @Schema({ timestamps: true, versionKey: "__v", collection: "saving_challenges" })
 export class ChallengeDocument {

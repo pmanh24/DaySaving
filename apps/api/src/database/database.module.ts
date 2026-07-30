@@ -4,7 +4,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import {
   CounterDocument, CounterSchema, PayosWebhookEventDocument, PayosWebhookEventSchema,
   ChallengeDocument, ChallengeSchema, CheckinDocument, CheckinSchema, ChallengePaymentDocument, ChallengePaymentSchema, SavingDayRecordDocument, SavingDayRecordSchema, SavingPaymentDocument, SavingPaymentSchema, SavingPlanDocument, SavingPlanSchema, SavingSlotDocument, SavingSlotSchema,
-  SavingEventDocument, SavingEventSchema, UserDocument, UserSchema,
+  SavingEventDocument, SavingEventSchema, PushSubscriptionDocument, PushSubscriptionSchema, UserDocument, UserSchema,
 } from "./schemas";
 
 const DATABASE_NAME = "saving_100_app";
@@ -27,6 +27,7 @@ const DATABASE_NAME = "saving_100_app";
     }),
     MongooseModule.forFeature([
       { name: UserDocument.name, schema: UserSchema },
+      { name: PushSubscriptionDocument.name, schema: PushSubscriptionSchema },
       { name: ChallengeDocument.name, schema: ChallengeSchema },
       { name: CheckinDocument.name, schema: CheckinSchema },
       { name: ChallengePaymentDocument.name, schema: ChallengePaymentSchema },

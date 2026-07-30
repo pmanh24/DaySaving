@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { ScheduleModule } from "@nestjs/schedule";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthModule } from "./auth/auth.module";
 import { ChallengesModule } from "./challenges/challenges.module";
@@ -9,6 +10,7 @@ import { SavingPlansModule } from "./saving-plans/saving-plans.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { DatabaseModule } from "./database/database.module";
 import { DatabaseHealthController } from "./health/database-health.controller";
+import { PushModule } from "./push/push.module";
 
 @Module({
   imports: [
@@ -34,11 +36,13 @@ import { DatabaseHealthController } from "./health/database-health.controller";
       },
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
     ChallengesModule,
     SavingPlansModule,
     PaymentsModule,
+    PushModule,
   ],
   controllers: [HealthController, DatabaseHealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
