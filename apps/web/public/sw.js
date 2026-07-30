@@ -1,18 +1,27 @@
 self.addEventListener("push", (event) => {
+  console.log("[WebPush] push event received", { hasData: Boolean(event.data) });
   let data = { title: "100 Days Saving", body: "Đến giờ tiết kiệm rồi.", url: "/", tag: "saving-reminder" };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch {
     // Keep the fallback notification when a provider sends an empty payload.
   }
-  event.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: "/icon.svg",
-    badge: "/icon.svg",
-    tag: data.tag,
-    renotify: true,
-    data: { url: data.url },
-  }));
+  event.waitUntil((async () => {
+    try {
+      await self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: "/icon.svg",
+        badge: "/icon.svg",
+        tag: data.tag,
+        renotify: true,
+        data: { url: data.url },
+      });
+      console.log("[WebPush] notification displayed", { tag: data.tag });
+    } catch (error) {
+      console.error("[WebPush] notification display failed", error);
+      throw error;
+    }
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {

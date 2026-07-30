@@ -11,7 +11,7 @@ export class UserDocument {
   @Prop({ default: "VND", enum: ["VND"] }) currency!: "VND";
   @Prop({ default: null, type: String }) refreshTokenHash!: string | null;
   @Prop({ default: false }) pushReminderEnabled!: boolean;
-  @Prop({ default: "15:10", match: /^([01]\d|2[0-3]):[0-5]\d$/ }) pushReminderTime!: string;
+  @Prop({ default: "15:00", match: /^([01]\d|2[0-3]):[0-5]\d$/ }) pushReminderTime!: string;
   @Prop({ default: "ACTIVE", enum: ["ACTIVE", "DISABLED"] }) status!: "ACTIVE" | "DISABLED";
 }
 export type UserDoc = HydratedDocument<UserDocument>;

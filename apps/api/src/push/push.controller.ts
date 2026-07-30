@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Headers, Post, UseGuards } from "@nestjs/common";
-import { IsInt, IsObject, IsOptional, IsString, IsUrl, Max, MaxLength, Min } from "class-validator";
+import { Body, Controller, Delete, Get, Headers, Patch, Post, UseGuards } from "@nestjs/common";
+import { IsInt, IsObject, IsOptional, IsString, IsUrl, Matches, Max, MaxLength, Min } from "class-validator";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -16,6 +16,10 @@ class UnsubscribeDto {
   @IsString() @MaxLength(2048) endpoint!: string;
 }
 
+class SetReminderTimeDto {
+  @IsString() @Matches(/^([01]\d|2[0-3]):[0-5]\d$/) reminderTime!: string;
+}
+
 @ApiTags("push")
 @Controller("push")
 @UseGuards(JwtAuthGuard)
@@ -23,6 +27,7 @@ export class PushController {
   constructor(private readonly push: PushService) {}
 
   @Get("status") async status(@CurrentUser() user: PublicUser) { return { success: true, data: await this.push.status(user.id) }; }
+  @Patch("settings") async settings(@CurrentUser() user: PublicUser, @Body() dto: SetReminderTimeDto) { return { success: true, data: await this.push.setReminderTime(user.id, dto.reminderTime) }; }
   @Post("subscribe") async subscribe(@CurrentUser() user: PublicUser, @Headers("user-agent") userAgent: string | undefined, @Body() dto: SubscribeDto) { return { success: true, data: await this.push.subscribe(user.id, { endpoint: dto.endpoint, keys: dto.keys as { p256dh: string; auth: string }, expirationTime: dto.expirationTime }, userAgent ?? null) }; }
   @Delete("subscribe") async unsubscribe(@CurrentUser() user: PublicUser, @Body() dto: UnsubscribeDto) { return { success: true, data: await this.push.unsubscribe(user.id, dto.endpoint) }; }
   @Post("test") async test(@CurrentUser() user: PublicUser) { return { success: true, data: await this.push.sendTest(user.id) }; }
