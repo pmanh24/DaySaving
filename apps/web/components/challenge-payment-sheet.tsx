@@ -32,7 +32,7 @@ export function ChallengePaymentSheet({ payment, onClose, onReconcile, onCancel,
           <button className="button secondary" onClick={() => { if (payment.checkoutUrl) void navigator.clipboard?.writeText(payment.checkoutUrl); }} disabled={loading}><Copy size={16} /> Link thanh toán</button>
           <button className="button secondary" onClick={onReconcile} disabled={loading}><RefreshCw size={16} /> Kiểm tra</button>
         </div>
-        <button className="cancel-link" onClick={onCancel} disabled={loading}>Hủy payment</button>
+        <button className="cancel-link" onClick={onCancel} disabled={loading}>Hủy thanh toán</button>
       </>}
     </section>
   </div>;

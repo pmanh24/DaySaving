@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
@@ -44,6 +45,7 @@ export default function HomePage() {
     message: string;
     checkin?: Checkin;
   } | null>(null);
+  const redirectTimer = useRef<number | null>(null);
   const selectedNumber = useSavingUi((state) => state.selectedNumber);
   const suggestedNumber = useSavingUi((state) => state.suggestedNumber);
   const sheetOpen = useSavingUi((state) => state.sheetOpen);
@@ -66,6 +68,22 @@ export default function HomePage() {
     setSheetOpen(false);
     setSelectedNumber(null);
     setSuggestedNumber(null);
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 7500);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  useEffect(() => () => {
+    if (redirectTimer.current !== null) window.clearTimeout(redirectTimer.current);
+  }, []);
+
+  const celebrateCompletion = () => {
+    setToast({ message: "Chúc mừng bạn! Bạn đã hoàn thành thử thách 100 ngày." });
+    if (redirectTimer.current !== null) window.clearTimeout(redirectTimer.current);
+    redirectTimer.current = window.setTimeout(() => window.location.assign("/plan/new"), 2200);
   };
 
   const choose = (cell: BoardCell) => {
@@ -98,20 +116,19 @@ export default function HomePage() {
     )
       .then((next) => {
         setLocalBoard(next);
-        setToast({
-          message: `Đã tick tự tiết kiệm ${money(selected.amount)}`,
-          checkin: next.today.checkin ?? undefined,
-        });
+        if (next.challenge.status === "COMPLETED") celebrateCompletion();
+        else setToast({ message: `Đã tick tự tiết kiệm ${money(selected.amount)}`, checkin: next.today.checkin ?? undefined });
         clearSelection();
       })
-      .catch((error: unknown) =>
+      .catch((error: unknown) => {
+        clearSelection();
         setToast({
           message:
             error instanceof Error
               ? error.message
               : "Không thể lưu khoản tiết kiệm",
-        }),
-      )
+        });
+      })
       .finally(() => setLoading(false));
   };
 
@@ -156,14 +173,18 @@ export default function HomePage() {
           const refreshed = await refetch();
           if (refreshed.data) setLocalBoard(refreshed.data);
           setToast({
-            message: `Đã nhận thanh toán ${money(nextPayment.amount)} cho ô số ${nextPayment.number}.`,
+            message: refreshed.data?.challenge.status === "COMPLETED" ? "Chúc mừng bạn! Bạn đã hoàn thành thử thách 100 ngày." : `Đã nhận thanh toán ${money(nextPayment.amount)} cho ô số ${nextPayment.number}.`,
           });
           setPayment(null);
           clearSelection();
+          if (refreshed.data?.challenge.status === "COMPLETED") {
+            if (redirectTimer.current !== null) window.clearTimeout(redirectTimer.current);
+            redirectTimer.current = window.setTimeout(() => window.location.assign("/plan/new"), 2200);
+          }
         } else {
           setPayment(nextPayment);
           setToast({
-            message: `Payment đang ở trạng thái ${nextPayment.status}.`,
+            message: "Khoản thanh toán chưa được xác nhận. Bạn có thể kiểm tra lại sau ít phút.",
           });
         }
       })
@@ -189,12 +210,12 @@ export default function HomePage() {
       .then(() => {
         setPayment(null);
         clearSelection();
-        setToast({ message: "Đã hủy payment." });
+        setToast({ message: "Đã hủy thanh toán." });
       })
       .catch((error: unknown) =>
         setToast({
           message:
-            error instanceof Error ? error.message : "Không thể hủy payment",
+            error instanceof Error ? error.message : "Không thể hủy thanh toán",
         }),
       )
       .finally(() => setPaymentLoading(false));
@@ -330,6 +351,16 @@ export default function HomePage() {
                 <span>Xem lịch sử</span>
               </button>
             </div>
+          </section>
+          <section className="section">
+            <Link className="flex-plan-banner" href="/plan/new">
+              <div>
+                <span>KẾ HOẠCH MỞ RỘNG</span>
+                <strong>Chọn kế hoạch từ 30 đến 300 ngày</strong>
+                <small>Thay bảng 100 ô mặc định bằng bảng theo số ngày bạn muốn.</small>
+              </div>
+              <ArrowRight size={19} />
+            </Link>
           </section>
           <section className="section">
             <SavingBoard

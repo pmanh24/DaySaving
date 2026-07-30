@@ -7,6 +7,7 @@ interface ConfirmSheetProps {
   number: number;
   amount: number;
   total: number;
+  allowCash?: boolean;
   onClose: () => void;
   onCashConfirm: () => void;
   onPayosConfirm: () => void;
@@ -17,6 +18,7 @@ export function ConfirmSheet({
   number,
   amount,
   total,
+  allowCash = true,
   onClose,
   onCashConfirm,
   onPayosConfirm,
@@ -40,7 +42,7 @@ export function ConfirmSheet({
         <div className="hero-row">
           <div>
             <p className="eyebrow" style={{ color: "#666" }}>
-              Ô SỐ {number}
+              KHOẢN TIẾT KIỆM
             </p>
             <h2 id="confirm-title">Chọn cách tiết kiệm</h2>
           </div>
@@ -60,8 +62,8 @@ export function ConfirmSheet({
         </div>
         <div className="sheet-amount">{money(amount)}</div>
         <p>
-          Chọn một cách để hoàn thành ô này. Số tiền và trạng thái sẽ do backend
-          ghi nhận.
+          Chọn một cách để hoàn thành khoản này. Số tiền đầy đủ sẽ hiển thị ở
+          đây trước khi bạn xác nhận.
         </p>
         <div className="sheet-summary">
           <div className="sheet-stat">
@@ -74,7 +76,7 @@ export function ConfirmSheet({
           </div>
         </div>
         <div className="choice-list">
-          <button
+          {allowCash ? <button
             className="choice-card"
             onClick={onCashConfirm}
             disabled={loading}
@@ -89,7 +91,7 @@ export function ConfirmSheet({
               </small>
             </span>
             {loading ? <LoaderCircle size={18} className="spin" /> : null}
-          </button>
+          </button> : null}
           <button
             className="choice-card choice-card-dark"
             onClick={onPayosConfirm}

@@ -621,7 +621,7 @@ createOrUpdateCollection("saving_plans", {
 
             /**
              * Tổng số ngày/lượt tiết kiệm.
-             * Tối thiểu 1, tối đa 300.
+             * Tối thiểu 30, tối đa 300.
              */
             durationDays: {
                 bsonType: [
@@ -630,7 +630,7 @@ createOrUpdateCollection("saving_plans", {
                     "double",
                     "decimal"
                 ],
-                minimum: 1,
+                minimum: 30,
                 maximum: 300,
                 multipleOf: 1
             },

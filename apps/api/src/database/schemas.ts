@@ -60,7 +60,7 @@ CheckinSchema.index({ challengeId: 1, createdAt: -1 });
 export class SavingPlanDocument {
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId }) userId!: Types.ObjectId;
   @Prop({ required: true, minlength: 2, maxlength: 80 }) name!: string;
-  @Prop({ required: true, min: 1, max: 300 }) durationDays!: number;
+  @Prop({ required: true, min: 30, max: 300 }) durationDays!: number;
   @Prop({ default: 1, min: 1, max: 300 }) currentDayIndex!: number;
   @Prop({ default: 0, min: 0, max: 300 }) completedDays!: number;
   @Prop({ required: true, enum: ["CLASSIC_SEQUENCE", "TARGET_AUTO_DISTRIBUTION", "CUSTOM_LIST"] }) generationMode!: string;
@@ -72,7 +72,7 @@ export class SavingPlanDocument {
   @Prop({ default: null, type: Number, min: 0 }) maxAmount!: number | null;
   @Prop({ default: null, type: Number, min: 0 }) stepAmount!: number | null;
   @Prop({ default: "FLEXIBLE_CONTRIBUTION_DAYS", enum: ["FLEXIBLE_CONTRIBUTION_DAYS", "CALENDAR_DAYS"] }) progressMode!: string;
-  @Prop({ default: "PAYOS_ONLY", enum: ["PAYOS_ONLY", "PAYOS_OR_MANUAL"] }) confirmationMode!: string;
+  @Prop({ default: "PAYOS_OR_MANUAL", enum: ["PAYOS_ONLY", "PAYOS_OR_MANUAL"] }) confirmationMode!: string;
   @Prop({ default: "SINGLE_OWNER_CHANNEL", enum: ["SINGLE_OWNER_CHANNEL", "PLATFORM_CHANNEL"] }) paymentDestinationMode!: string;
   @Prop({ default: 15, min: 1, max: 1440 }) paymentExpiresInMinutes!: number;
   @Prop({ default: "Asia/Ho_Chi_Minh", minlength: 3, maxlength: 64 }) timezone!: string;

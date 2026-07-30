@@ -39,9 +39,31 @@ export class SavingPlansStore {
   }
 
   addPlan(plan: SavingPlan): void { this.plans.set(plan.id, plan); void this.persistPlan(plan); }
+  savePlan(plan: SavingPlan): void { void this.persistPlan(plan); }
+  async deletePlan(userId: string, planId: string): Promise<SavingPlan> {
+    const plan = this.getPlan(userId, planId);
+    const planPayments = [...this.payments.values()].filter((payment) => payment.planId === planId);
+    if (planPayments.some((payment) => ["CREATING", "PENDING", "PROCESSING"].includes(payment.status))) {
+      throw new ApiError("PLAN_HAS_PENDING_PAYMENT", "Hãy hủy khoản thanh toán đang chờ trước khi xóa kế hoạch.", 409);
+    }
+    const objectId = this.objectId(planId);
+    if (this.planModel && this.slotModel && this.paymentModel && this.recordModel) {
+      await Promise.all([
+        this.planModel.deleteOne({ _id: objectId }).exec(),
+        this.slotModel.deleteMany({ planId: objectId }).exec(),
+        this.paymentModel.deleteMany({ planId: objectId }).exec(),
+        this.recordModel.deleteMany({ planId: objectId }).exec(),
+      ]);
+    }
+    this.plans.delete(planId);
+    for (const [slotId, slot] of this.slots) if (slot.planId === planId) this.slots.delete(slotId);
+    for (const [paymentId, payment] of this.payments) if (payment.planId === planId) this.payments.delete(paymentId);
+    for (const [recordId, record] of this.dayRecords) if (record.planId === planId) this.dayRecords.delete(recordId);
+    return plan;
+  }
   addSlot(slot: SavingSlot): void { this.slots.set(slot.id, slot); void this.persistSlot(slot); }
 
-  getPlan(userId: string, planId: string): SavingPlan { const plan = this.plans.get(planId); if (!plan || plan.userId !== userId) throw new ApiError("PLAN_NOT_FOUND", "Không tìm thấy kế hoạch.", 404); return plan; }
+  getPlan(userId: string, planId: string): SavingPlan { const plan = this.plans.get(planId); if (!plan || plan.userId !== userId) throw new ApiError("PLAN_NOT_FOUND", "Không tìm thấy kế hoạch.", 404); if (plan.status === "SCHEDULED" && plan.startDate <= localDate(plan.timezone)) { plan.status = "ACTIVE"; plan.activatedAt ??= new Date().toISOString(); this.savePlan(plan); } return plan; }
   getSlot(userId: string, planId: string, slotId: string): SavingSlot { const slot = this.slots.get(slotId); if (!slot || slot.userId !== userId || slot.planId !== planId) throw new ApiError("SLOT_NOT_FOUND", "Không tìm thấy khoản tiền.", 404); return slot; }
   getPayment(userId: string, paymentId: string): SavingPayment { const payment = this.payments.get(paymentId); if (!payment || payment.userId !== userId) throw new ApiError("PAYMENT_NOT_FOUND", "Không tìm thấy thanh toán.", 404); return payment; }
   findPendingPayment(userId: string, planId: string, dayIndex: number): SavingPayment | null { return [...this.payments.values()].find((payment) => payment.userId === userId && payment.planId === planId && payment.dayIndex === dayIndex && ["CREATING", "PENDING", "PROCESSING"].includes(payment.status)) ?? null; }
@@ -106,6 +128,7 @@ export class SavingPlansStore {
   manuallyCompleteSlot(userId: string, planId: string, slotId: string, note: string): SavingDayRecord {
     const plan = this.getPlan(userId, planId);
     if (plan.confirmationMode !== "PAYOS_OR_MANUAL") throw new ApiError("MANUAL_CONFIRMATION_DISABLED", "Kế hoạch này chỉ xác nhận qua payOS.", 409);
+    if (plan.status !== "ACTIVE") throw new ApiError("PLAN_NOT_ACTIVE", "Kế hoạch chưa hoạt động.", 409);
     const slot = this.getSlot(userId, planId, slotId);
     if (slot.status !== "AVAILABLE") throw new ApiError("SLOT_NOT_AVAILABLE", "Khoản tiền này không còn khả dụng.", 409);
     const now = new Date().toISOString();

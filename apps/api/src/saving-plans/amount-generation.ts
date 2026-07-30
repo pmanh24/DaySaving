@@ -26,7 +26,7 @@ function positiveInteger(value: number | undefined, field: string): number {
 }
 
 function duration(value: number): number {
-  if (!Number.isInteger(value) || value < 1 || value > 300) throw new ApiError("PLAN_DURATION_INVALID", "Số ngày phải nằm trong khoảng từ 1 đến 300.");
+  if (!Number.isInteger(value) || value < 30 || value > 300) throw new ApiError("PLAN_DURATION_INVALID", "Số ngày phải nằm trong khoảng từ 30 đến 300.");
   return value;
 }
 
