@@ -147,34 +147,36 @@ export function ApiPlanView() {
     return <SimplePage active="plan" eyebrow="KẾ HOẠCH TIẾT KIỆM" title="Chưa có kế hoạch" subtitle="Tạo kế hoạch đầu tiên để bắt đầu."><div className="empty"><strong>Bạn chưa có kế hoạch nào.</strong><Link className="button primary" href="/plan/new" style={{ display: "inline-flex", alignItems: "center", marginTop: 14, textDecoration: "none" }}>Tạo kế hoạch</Link></div></SimplePage>;
   }
 
-  return <SimplePage active="plan" eyebrow="KẾ HOẠCH TIẾT KIỆM" title={state.plan.name} subtitle="Chạm vào một ô để xem đầy đủ số tiền và chọn cách tiết kiệm.">
-    <div className="plan-overview">
-      <div><span>Đã tiết kiệm</span><strong>{money(state.plan.totalSavedAmount)}</strong></div>
-      <div><span>Còn lại</span><strong>{money(state.plan.remainingAmount)}</strong></div>
-    </div>
-    <div className="plan-progress">
-      <div className="progress-label"><span>{state.plan.completedDays} / {state.plan.durationDays} ngày hoàn thành</span><strong>{Math.round((state.plan.completedDays / state.plan.durationDays) * 100)}%</strong></div>
-      <div className="progress-track"><div className="progress-fill" style={{ width: `${(state.plan.completedDays / state.plan.durationDays) * 100}%` }} /></div>
-    </div>
-    {!planIsActive && <div className="today-card"><div className="today-icon"><Clock3 size={20} /></div><div><strong>Kế hoạch chưa bắt đầu</strong><span>Bảng sẽ mở vào ngày {state.plan.startDate}.</span></div></div>}
-    {pending && <div className="today-card"><div className="today-icon"><QrCode size={20} /></div><div><strong>Đang chờ thanh toán</strong><span>{money(pending.amount)} · Đang chờ xác nhận</span></div></div>}
-    <div className="plan-board-action"><span>Con số trong ô được tính theo nghìn đồng.</span><div className="plan-board-links"><Link className="plan-change-link" href="/plan/new">Đổi kế hoạch</Link><Link className="plan-change-link" href="/plan/manage">Quản lý</Link></div></div>
-    <div className="board-card plan-board-card">
-      <div className="section-row" style={{ marginBottom: 12 }}><div><h2 className="section-title">Bảng tiết kiệm</h2><p className="section-caption">{state.plan.durationDays} ô · Chạm vào một ô để xem chi tiết</p></div><CircleHelp size={18} color="#9a9aae" /></div>
-      <div className="board" aria-label={`Bảng tiết kiệm ${state.plan.durationDays} ô`}>
-        {slots.map((slot) => {
-          const completed = slot.status === "PAID" || slot.status === "MANUALLY_COMPLETED";
-          return <button key={slot.id} className={`cell ${completed ? "done" : ""} ${slot.status === "RESERVED" ? "reserved" : ""}`} disabled={slot.status !== "AVAILABLE" || !planIsActive} onClick={() => setSelected(slot)} aria-label={`Ô số ${slot.slotIndex}, ${money(slot.amount)}${completed ? ", đã hoàn thành" : slot.status === "RESERVED" ? ", đang chờ xác nhận" : ""}`}>
-            <small>{slot.slotIndex}</small>
-            {completed ? <Check size={16} /> : boardMoney(slot.amount)}
-            {slot.status === "RESERVED" && <Clock3 className="cell-status" size={12} aria-hidden="true" />}
-          </button>;
-        })}
+  return <>
+    <SimplePage active="plan" eyebrow="KẾ HOẠCH TIẾT KIỆM" title={state.plan.name} subtitle="Chạm vào một ô để xem đầy đủ số tiền và chọn cách tiết kiệm.">
+      <div className="plan-overview">
+        <div><span>Đã tiết kiệm</span><strong>{money(state.plan.totalSavedAmount)}</strong></div>
+        <div><span>Còn lại</span><strong>{money(state.plan.remainingAmount)}</strong></div>
       </div>
-      <div className="board-legend"><span className="legend-item"><i className="legend-dot done" />Đã xong</span><span className="legend-item"><i className="legend-dot" />Có thể chọn</span><span className="legend-item"><i className="legend-dot reserved" />Đang chờ</span></div>
-    </div>
-    {notice && <div className="notice-card" role="status">{notice}</div>}
+      <div className="plan-progress">
+        <div className="progress-label"><span>{state.plan.completedDays} / {state.plan.durationDays} ngày hoàn thành</span><strong>{Math.round((state.plan.completedDays / state.plan.durationDays) * 100)}%</strong></div>
+        <div className="progress-track"><div className="progress-fill" style={{ width: `${(state.plan.completedDays / state.plan.durationDays) * 100}%` }} /></div>
+      </div>
+      {!planIsActive && <div className="today-card"><div className="today-icon"><Clock3 size={20} /></div><div><strong>Kế hoạch chưa bắt đầu</strong><span>Bảng sẽ mở vào ngày {state.plan.startDate}.</span></div></div>}
+      {pending && <div className="today-card"><div className="today-icon"><QrCode size={20} /></div><div><strong>Đang chờ thanh toán</strong><span>{money(pending.amount)} · Đang chờ xác nhận</span></div></div>}
+      <div className="plan-board-action"><span>Con số trong ô được tính theo nghìn đồng.</span><div className="plan-board-links"><Link className="plan-change-link" href="/plan/new">Đổi kế hoạch</Link><Link className="plan-change-link" href="/plan/manage">Quản lý</Link></div></div>
+      <div className="board-card plan-board-card">
+        <div className="section-row" style={{ marginBottom: 12 }}><div><h2 className="section-title">Bảng tiết kiệm</h2><p className="section-caption">{state.plan.durationDays} ô · Chạm vào một ô để xem chi tiết</p></div><CircleHelp size={18} color="#9a9aae" /></div>
+        <div className="board" aria-label={`Bảng tiết kiệm ${state.plan.durationDays} ô`}>
+          {slots.map((slot) => {
+            const completed = slot.status === "PAID" || slot.status === "MANUALLY_COMPLETED";
+            return <button key={slot.id} className={`cell ${completed ? "done" : ""} ${slot.status === "RESERVED" ? "reserved" : ""}`} disabled={slot.status !== "AVAILABLE" || !planIsActive} onClick={() => setSelected(slot)} aria-label={`Ô số ${slot.slotIndex}, ${money(slot.amount)}${completed ? ", đã hoàn thành" : slot.status === "RESERVED" ? ", đang chờ xác nhận" : ""}`}>
+              <small>{slot.slotIndex}</small>
+              {completed ? <Check size={16} /> : boardMoney(slot.amount)}
+              {slot.status === "RESERVED" && <Clock3 className="cell-status" size={12} aria-hidden="true" />}
+            </button>;
+          })}
+        </div>
+        <div className="board-legend"><span className="legend-item"><i className="legend-dot done" />Đã xong</span><span className="legend-item"><i className="legend-dot" />Có thể chọn</span><span className="legend-item"><i className="legend-dot reserved" />Đang chờ</span></div>
+      </div>
+    </SimplePage>
     {selected && <ConfirmSheet allowCash={state.plan.confirmationMode === "PAYOS_OR_MANUAL"} number={selected.slotIndex} amount={selected.amount} total={state.plan.totalSavedAmount} onClose={() => setSelected(null)} onCashConfirm={completeManually} onPayosConfirm={createPayment} loading={actionLoading} />}
     {pending && <div className="sheet-backdrop" role="presentation"><section className="sheet payment-sheet" role="dialog" aria-modal="true"><div className="drag" /><div className="payment-status-pill"><span className="pulse-dot" /> Đang chờ xác nhận</div><h2>Thanh toán khoản tiết kiệm</h2><p>Chuyển đúng số tiền bên dưới. Hệ thống sẽ cập nhật khi thanh toán được xác nhận.</p><div className="qr-wrap"><QRCodeSVG value={pending.qrCode ?? pending.checkoutUrl ?? pending.description} size={190} includeMargin /></div><div className="sheet-amount">{money(pending.amount)}</div><p className="qr-help">Nếu đã chuyển tiền, hãy bấm “Kiểm tra” để cập nhật trạng thái.</p><div className="payment-actions"><button className="button secondary" onClick={copyCheckout}><Copy size={16} /> Link</button><button className="button secondary" onClick={reconcile}><RefreshCw size={16} /> Kiểm tra</button></div><button className="cancel-link" onClick={cancel}>Hủy thanh toán</button></section></div>}
-  </SimplePage>;
+    {notice && <div className="notice-card" role="status">{notice}</div>}
+  </>;
 }
