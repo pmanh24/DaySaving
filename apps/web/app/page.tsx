@@ -343,13 +343,10 @@ export default function HomePage() {
                 <Dice5 size={18} />
                 <span>Chọn ngẫu nhiên</span>
               </button>
-              <button
-                className="quick-action"
-                onClick={() => window.location.assign("/history")}
-              >
+              <Link className="quick-action" href="/history">
                 <History size={18} />
                 <span>Xem lịch sử</span>
-              </button>
+              </Link>
             </div>
           </section>
           <section className="section">
